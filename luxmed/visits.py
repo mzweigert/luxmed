@@ -43,13 +43,16 @@ class LuxMedVisits:
     def _common_reservation_data(
             clinic_id: int, doctor_id: int, room_id: int, service_id: int, start_date_time: Union[datetime, str],
             is_additional: bool = False, referral_required_by_service: bool = False) -> Iterator[Tuple[str, Any]]:
+        data = dict()
         for key, value in locals().items():
             if isinstance(value, datetime):
                 value = value.isoformat()
-            yield camelize(key), value
+            data.update({camelize(key) : value})
+        data.pop('Data')
+        return data
 
     def _post_reservation_to(self, url: str, *args, payer_details: List[Dict], **kwargs) -> Dict:
-        data = dict(self._common_reservation_data(*args, **kwargs))
+        data = self._common_reservation_data(*args, **kwargs)
         data['PayerDetailsList'] = payer_details
         return self._transport.post(url, json=data)
 
