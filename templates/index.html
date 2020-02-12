@@ -29,8 +29,10 @@
     <title></title>
 </head>
 <body>
-<div class="container">
-    {% macro render_select_field(field) %}
+
+<div class="container" style="width: 75%;">
+
+    {% macro render_field(field) %}
 
     <div class="form-group row {% if field.errors %} error {% endif %}">
         <label class="col-sm-2 col-form-label">{{ field.label }}</label>
@@ -44,7 +46,6 @@
         </div>
     </div>
     {% endmacro %}
-
     {% macro render_time_field(field) %}
     <label class="col-sm-2 col-form-label">{{ field.label }}</label>
     <div class="col-sm-4">
@@ -73,10 +74,13 @@
         </div>
     </div>
     {% endmacro %}
+
+    {% if session['logged_in'] %}
+
     <form action="/" name="push_visit" method="POST">
-        {{ render_select_field(form.city_id) }}
-        {{ render_select_field(form.clinic_ids) }}
-        {{ render_select_field(form.service_id) }}
+        {{ render_field(form.city_id) }}
+        {{ render_field(form.clinic_ids) }}
+        {{ render_field(form.service_id) }}
 
         <div class="form-group row">
             {{ render_time_field(form.hours) }}
@@ -88,7 +92,18 @@
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
+
+    {% else %}
+    <form action="/login" method="POST">
+
+        {{ render_field(form.email) }}
+        {{ render_field(form.password) }}
+        {{ render_field(form.medical_type) }}
+        <input type="submit" value="Zaloguj" class="btn btn-primary">
+    </form>
+    {% endif %}
 </div>
+
 
 </body>
 </html>

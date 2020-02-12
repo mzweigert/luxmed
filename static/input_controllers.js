@@ -1,6 +1,6 @@
 var input_controllers = function() {
      $cities = $('#cities');
-     $cities.prepend('<option value="">Wybierz miasto</option>');
+     $cities.prepend('<option value="" selected>Wybierz miasto</option>');
 
     $clinics = $('#clinics');
     $services = $('#services');

@@ -60,6 +60,9 @@ class MedicalInsuranceApi:
             return details
         return None
 
+    def get_user_info(self):
+        return self._api.user()
+
     class VisitData(object):
         def __init__(self, dictionary: dict):
             for k in dictionary:
@@ -70,3 +73,4 @@ class MedicalInsuranceApi:
                     setattr(self, k, None)
                 else:
                     setattr(self, k, dictionary[k])
+
