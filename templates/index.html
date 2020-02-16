@@ -31,7 +31,11 @@
 <body>
 
 <div class="container" style="width: 75%;">
-
+    {% if error_msg %}
+    <div class="alert alert-danger" role="alert">
+        {{error_msg}}
+    </div>
+    {% endif %}
     {% macro render_field(field) %}
 
     <div class="form-group row {% if field.errors %} error {% endif %}">
@@ -75,7 +79,7 @@
     </div>
     {% endmacro %}
 
-    {% if session['logged_in'] %}
+    {% if 'user_id' in session or '_user_id' in session %}
 
     <form action="/" name="push_visit" method="POST">
         {{ render_field(form.city_id) }}
@@ -95,7 +99,6 @@
 
     {% else %}
     <form action="/login" method="POST">
-
         {{ render_field(form.email) }}
         {{ render_field(form.password) }}
         {{ render_field(form.medical_type) }}

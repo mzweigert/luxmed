@@ -16,8 +16,14 @@ var date_controllers = function() {
         });
         $date_from.on("dp.change", function (e) {
             $date_to.data("DateTimePicker").minDate(e.date);
+            if(e.date > $date_to.data("DateTimePicker").date()) {
+                 $date_to.data("DateTimePicker").date(e.date)
+            }
         });
         $date_to.on("dp.change", function (e) {
             $date_from.data("DateTimePicker").maxDate(e.date);
+            if(e.date < $date_from.data("DateTimePicker").date()) {
+                 $date_from.data("DateTimePicker").date(e.date)
+            }
         });
 }

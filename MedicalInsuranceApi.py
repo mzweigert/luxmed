@@ -1,5 +1,6 @@
 from enum import Enum
 
+from db.VisitToBook import VisitToBook
 from luxmed import LuxMed
 from luxmed.visits import VisitHours
 
@@ -33,20 +34,27 @@ class MedicalInsuranceApi:
                 _services.update(services_part)
         return _services
 
-    def book_a_visit(self, form) -> dict:
-        data = MedicalInsuranceApi.VisitData(form)
-        lang = next(iter(self._api.languages()))
-        payer = next(iter(self._api.payers(data.city_id, data.service_id)))['Id']
-        if not data.clinic_ids:
-            visits = self._api.visits.find(data.city_id, data.service_id, lang, payer, hours=data.hours)
-            return self.__try_book_a_visit(visits)
+    def book_a_visit(self, visit: VisitToBook) -> dict:
+        lang_id = None
+        for _id, lang in self._api.languages().items():
+            if lang == 'polish':
+                lang_id = _id
+        payer = next(iter(self._api.payers(visit.city_id, visit.service_id)))['Id']
+        details = None
+        if not visit.clinic_ids:
+            visits = self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, hours=VisitHours(visit.hours),
+                                           from_date=visit.date_from, to_date=visit.date_to)
+            details = self.__try_book_a_visit(visits)
         else:
-            for clinic_id in data.clinic_ids:
-                visits_part = self._api.visits.find(data.city_id, data.service_id, lang, payer, clinic_id,
-                                                    hours=data.hours)
+            for clinic_id in visit.clinic_ids:
+                visits_part = self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id,
+                                                    hours=VisitHours(visit.hours), from_date=visit.date_from,
+                                                    to_date=visit.date_to)
                 details = self.__try_book_a_visit(visits_part)
                 if details:
-                    return details
+                    break
+
+        return details
 
     def __try_book_a_visit(self, visits):
         for visit in visits:
@@ -62,15 +70,3 @@ class MedicalInsuranceApi:
 
     def get_user_info(self):
         return self._api.user()
-
-    class VisitData(object):
-        def __init__(self, dictionary: dict):
-            for k in dictionary:
-                if k == 'hours':
-                    hours = VisitHours(int(dictionary[k]))
-                    setattr(self, k, hours)
-                elif k == 'clinic_ids' and dictionary[k][0] < 0:
-                    setattr(self, k, None)
-                else:
-                    setattr(self, k, dictionary[k])
-
