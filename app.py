@@ -46,8 +46,7 @@ def before_request():
 def index():
     if not get_user_id_from_session() or get_user_id_from_session() not in cache:
         logout_user()
-        form = LoginForm()
-        return render_template('index.html', form=form)
+        return redirect(url_for('login'))
 
     user_id = get_user_id_from_session()
     _cities = cache[user_id + '-api'].get_cities().items()
@@ -66,20 +65,24 @@ def index():
             form.service_id.choices = cache[user_id + '-api'].get_services(form.city_id.data,
                                                                            _clinic_ids).items()
         if form.validate():
-            data = VisitToBook.init_from(form.data)
-            data.user = cache[user_id].email
-            visit = cache[user_id + '-api'].book_a_visit(data)
-            if not visit:
-                exists = DBManager.save_visit_to_book(data)
-                if exists:
-                    return "Wizyta z podanymi kryteriami została już zapisana do rezerwacji"
-                else:
-                    return "Nie zarezerowano wizyty w tym momencie, ale została ona zapisana do rezerwacji"
-            return visit
+            return handle_visit_request(form, user_id)
 
     form.city_id.choices = _cities
 
     return render_template('index.html', form=form)
+
+
+def handle_visit_request(form, user_id):
+    data = VisitToBook.init_from(form.data)
+    data.user = cache[user_id].email
+    visit = cache[user_id + '-api'].book_a_visit(data)
+    if not visit:
+        exists = DBManager.save_visit_to_book(data)
+        if exists:
+            return "Wizyta z podanymi kryteriami została już zapisana do rezerwacji"
+        else:
+            return "Nie zarezerowano wizyty w tym momencie, ale została ona zapisana do rezerwacji"
+    return visit
 
 
 @app.route("/clinics/<city_id>")
@@ -113,8 +116,15 @@ def get_user_id_from_session():
     return None
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST', 'GET'])
 def login():
+    if request.method == 'GET':
+        if not get_user_id_from_session() or get_user_id_from_session() not in cache:
+            form = LoginForm()
+            return render_template('login.html', form=form)
+        else:
+            return redirect(url_for('index'))
+
     form = LoginForm(request.form)
     if form.validate():
 
@@ -128,17 +138,17 @@ def login():
             elif user and auth_data[form.email.data] == form.password.data:
                 api = MedicalInsuranceApi(form.email.data, form.password.data, MedicalInsuranceType.LuxMed)
             else:
-                return render_template('index.html', form=form, error_msg="Nieprawidłowe hasło")
+                return render_template('login.html', form=form, error_msg="Nieprawidłowe hasło")
 
             cache[user.id] = user
             cache[user.id + '-api'] = api
             login_user(user, remember=form.remember_me.data)
             return redirect(url_for('index'))
         except LuxMedError:
-            return render_template('index.html', form=form,
+            return render_template('login.html', form=form,
                                    error_msg="System nie mógł zalogować do opieki medycznej, spróbuj ponownie.")
 
-    return render_template('index.html', form=form, error_msg="Nieprawidłowe dane logowania")
+    return render_template('login.html', form=form, error_msg="Nieprawidłowe dane logowania")
 
 
 if __name__ == '__main__':

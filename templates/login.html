@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <script src="static/jquery-3.4.1.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+{% macro render_field(field) %}
+
+<div class="form-group row {% if field.errors %} error {% endif %}">
+    <label class="col-sm-2 col-form-label">{{ field.label }}</label>
+    <div class="col-sm-10">
+        {{ field(class='form-control selectpicker', **kwargs)|safe }}
+        {% if field.errors %}
+        {% for error in field.errors %}
+        <span class="help-inline">[{{ error }}]</span><br>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+<div class="container" style="width: 75%;">
+    <form action="/login" method="POST">
+        {{ render_field(form.email) }}
+        {{ render_field(form.password) }}
+        {{ render_field(form.medical_type) }}
+        <input type="submit" value="Zaloguj" class="btn btn-primary">
+    </form>
+</div>
+</body>
+</html>

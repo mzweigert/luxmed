@@ -79,8 +79,6 @@
     </div>
     {% endmacro %}
 
-    {% if 'user_id' in session or '_user_id' in session %}
-
     <form action="/" name="push_visit" method="POST">
         {{ render_field(form.city_id) }}
         {{ render_field(form.clinic_ids) }}
@@ -97,14 +95,6 @@
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
 
-    {% else %}
-    <form action="/login" method="POST">
-        {{ render_field(form.email) }}
-        {{ render_field(form.password) }}
-        {{ render_field(form.medical_type) }}
-        <input type="submit" value="Zaloguj" class="btn btn-primary">
-    </form>
-    {% endif %}
 </div>
 
 
