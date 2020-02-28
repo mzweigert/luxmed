@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional, Tuple, Any
 
 from db.VisitToBook import VisitToBook
 from luxmed import LuxMed
@@ -34,7 +35,7 @@ class MedicalInsuranceApi:
                 _services.update(services_part)
         return _services
 
-    def book_a_visit(self, visit: VisitToBook) -> dict:
+    def book_a_visit(self, visit: VisitToBook) -> Tuple[Optional[Any], VisitToBook]:
         lang_id = None
         for _id, lang in self._api.languages().items():
             if lang == 'polish':
@@ -50,23 +51,30 @@ class MedicalInsuranceApi:
                 visits_part = self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id,
                                                     hours=VisitHours(visit.hours), from_date=visit.date_from,
                                                     to_date=visit.date_to)
-                details = self.__try_book_a_visit(visits_part)
-                if details:
+                details, wrong_clinic = self.__try_book_a_visit(visits_part)
+                if wrong_clinic:
+                    visit.clinic_ids.remove(clinic_id)
+                elif details:
                     break
 
-        return details
+        return visit, details
 
     def __try_book_a_visit(self, visits):
+        wrong_clinic = False
         for visit in visits:
-            details = self._api.visits.reserve(clinic_id=visit['Clinic']['Id'], doctor_id=visit['Doctor']['Id'],
-                                               room_id=visit['RoomId'],
-                                               service_id=visit['ServiceId'],
-                                               start_date_time=visit['VisitDate']['StartDateTime'],
-                                               is_additional=visit['IsAdditional'],
-                                               referral_required_by_service=visit['ReferralRequiredByService'],
-                                               payer_data=visit['PayerDetailsList'][0])
-            return details
-        return None
+            if visit['PayerDetailsList']:
+                details = self._api.visits.reserve(clinic_id=visit['Clinic']['Id'], doctor_id=visit['Doctor']['Id'],
+                                                   room_id=visit['RoomId'],
+                                                   service_id=visit['ServiceId'],
+                                                   start_date_time=visit['VisitDate']['StartDateTime'],
+                                                   is_additional=visit['IsAdditional'],
+                                                   referral_required_by_service=visit['ReferralRequiredByService'],
+                                                   payer_data=visit['PayerDetailsList'][0])
+                wrong_clinic = False
+                return details, wrong_clinic
+            else:
+                wrong_clinic = True
+        return None, wrong_clinic
 
     def get_user_info(self):
         return self._api.user()

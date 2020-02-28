@@ -75,14 +75,15 @@ def index():
 def handle_visit_request(form, user_id):
     data = VisitToBook.init_from(form.data)
     data.user = cache[user_id].email
-    visit = cache[user_id + '-api'].book_a_visit(data)
-    if not visit:
-        exists = DBManager.save_visit_to_book(data)
-        if exists:
-            return "Wizyta z podanymi kryteriami została już zapisana do rezerwacji"
-        else:
+    exists = DBManager.visit_exists(data)
+    if exists:
+        return "Wizyta z podanymi kryteriami została już zapisana do rezerwacji"
+    else:
+        data, details = cache[user_id + '-api'].book_a_visit(data)
+        if not details:
+            DBManager.save_visit_to_book(data)
             return "Nie zarezerowano wizyty w tym momencie, ale została ona zapisana do rezerwacji"
-    return visit
+        return details
 
 
 @app.route("/clinics/<city_id>")

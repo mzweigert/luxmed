@@ -28,6 +28,6 @@ def action():
             continue
         api = MedicalInsuranceApi(email, password, MedicalInsuranceType.LuxMed)
         for visit_to_book in visits[email]:
-            visit = api.book_a_visit(visit_to_book)
-            if visit:
+            visit_to_book, details = api.book_a_visit(visit_to_book)
+            if details:
                 DBManager.remove_visit(visit_to_book.db_record_id)

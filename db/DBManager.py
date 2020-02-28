@@ -39,27 +39,31 @@ class DBConnection:
             self.client.command('create class VisitToBook extends V')
 
 
-def save_visit_to_book(visit: VisitToBook):
+def visit_exists(visit: VisitToBook):
     with DBConnection() as client:
         if visit.clinic_ids:
-            visit_exists = client.query(str.format(
+            _visit_exists = client.query(str.format(
                 'select from VisitToBook where city_id =\'{0}\' and clinic_ids = \'{1}\' and service_id = \'{2}\' '
                 'and hours = \'{3}\' and user = \'{4}\' and date_from >= \'{4}\' and date_to <= \'{5}\'', visit.city_id,
                 visit.clinic_ids, visit.service_id, visit.hours, visit.user, visit.date_from, visit.date_to))
         else:
-            visit_exists = client.query(str.format(
+            _visit_exists = client.query(str.format(
                 'select from VisitToBook where city_id =\'{0}\' and service_id = \'{1}\' '
                 'and hours = \'{2}\' and user = \'{3}\' and date_from >= \'{4}\' and date_to <= \'{5}\'', visit.city_id,
                 visit.service_id, visit.hours, visit.user, visit.date_from, visit.date_to))
 
-        if not visit_exists:
-            record = {
-                '@VisitToBook': visit.__dict__
-            }
-            client.record_create(-1, record)
-            return False
-        else:
+        if _visit_exists:
             return True
+        else:
+            return False
+
+
+def save_visit_to_book(visit: VisitToBook):
+    with DBConnection() as client:
+        record = {
+            '@VisitToBook': visit.__dict__
+        }
+        client.record_create(-1, record)
 
 
 def get_all_visits():
