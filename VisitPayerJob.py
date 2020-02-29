@@ -15,8 +15,9 @@ def init():
     scheduler = BackgroundScheduler()
     scheduler.start()
 
-    scheduler.add_job(action, trigger='interval', minutes=30)
+    scheduler.add_job(action, trigger='interval', minutes=15)
     atexit.register(lambda: scheduler.shutdown())
+    print("Scheduler initialized.")
 
 
 def action():

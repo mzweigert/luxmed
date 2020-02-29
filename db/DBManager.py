@@ -77,7 +77,7 @@ def get_all_visits():
                 user_visits.append(visit)
                 visits_to_book.update({visit.user: user_visits})
             else:
-                visits_to_book[visit.email].append(visit)
+                visits_to_book[visit.user].append(visit)
 
         return visits_to_book
 
