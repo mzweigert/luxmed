@@ -4,7 +4,9 @@ from luxmed.visits import VisitHours
 
 
 def try_parse_date(_date):
-    if isinstance(_date, datetime.date):
+    if type(_date) is datetime.datetime:
+        return _date.date()
+    elif type(_date) is datetime.date:
         return _date
     else:
         parsed_date = _date.split('.')

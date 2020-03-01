@@ -1,3 +1,4 @@
+from logger import *
 from enum import Enum
 from typing import Optional, Tuple, Any
 
@@ -56,13 +57,14 @@ class MedicalInsuranceApi:
                     visit.clinic_ids.remove(clinic_id)
                 elif details:
                     break
-
         return visit, details
 
     def __try_book_a_visit(self, visits):
         wrong_clinic = False
         for visit in visits:
             if visit['PayerDetailsList']:
+                logger.debug("Visit for user: {0} found!".format(self._api.user()['UserName']))
+                logger.debug(visit)
                 details = self._api.visits.reserve(clinic_id=visit['Clinic']['Id'], doctor_id=visit['Doctor']['Id'],
                                                    room_id=visit['RoomId'],
                                                    service_id=visit['ServiceId'],
@@ -70,6 +72,7 @@ class MedicalInsuranceApi:
                                                    is_additional=visit['IsAdditional'],
                                                    referral_required_by_service=visit['ReferralRequiredByService'],
                                                    payer_data=visit['PayerDetailsList'][0])
+                logger.debug(details)
                 wrong_clinic = False
                 return details, wrong_clinic
             else:
