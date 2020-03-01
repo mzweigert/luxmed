@@ -24,8 +24,6 @@ login_manager.login_view = "login"
 
 cache = ExpiringDict(max_len=100, max_age_seconds=60 * 60)
 
-VisitPayerJob.init()
-
 cp = ConfigParser()
 cp.read("auth.properties")
 auth_data = dict(cp.items("auth"))

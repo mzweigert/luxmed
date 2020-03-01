@@ -1,3 +1,4 @@
+click
 inflection>=0.3.1
 requests>=2.22.0
 Flask>=1.1.1
@@ -6,6 +7,5 @@ WTForms>=2.2.1
 Flask-Login>=0.5.0
 expiringdict>=1.2.0
 pyorient>=1.5.5
-APScheduler>=3.6.3
 bcrypt>=3.1.7
 ConfigParser>=4.0.2
