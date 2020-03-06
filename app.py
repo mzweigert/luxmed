@@ -8,7 +8,6 @@ from werkzeug.utils import redirect
 from expiringdict import ExpiringDict
 
 from db import DBManager, VisitToBook
-import VisitPayerJob
 from forms.LoginForm import LoginForm
 from MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType
 from db.UserClass import UserClass

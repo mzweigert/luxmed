@@ -23,9 +23,9 @@ class DBConnection:
         self.client.close()
 
     def __init_db(self):
-        exists = self.client.db_exists("visits", pyorient.STORAGE_TYPE_MEMORY)
+        exists = self.client.db_exists("visits", pyorient.STORAGE_TYPE_PLOCAL)
         if not exists:
-            self.client.db_create("visits", pyorient.DB_TYPE_GRAPH, pyorient.STORAGE_TYPE_MEMORY)
+            self.client.db_create("visits", pyorient.DB_TYPE_GRAPH, pyorient.STORAGE_TYPE_PLOCAL)
 
         self.client.db_open("visits", "root", "password")
         user_exists = self.client.command(
@@ -112,4 +112,4 @@ def save_user(user: UserClass):
 
 def remove_visit(db_record_id):
     with DBConnection() as client:
-        client.record_delete(-1, db_record_id)
+        client.command(str.format('delete vertex from VisitToBook where @RID =\'{0}\'', db_record_id))
