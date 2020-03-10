@@ -51,14 +51,18 @@
     </div>
     {% endmacro %}
     {% macro render_time_field(field) %}
-    <label class="col-sm-2 col-form-label">{{ field.label }}</label>
-    <div class="col-sm-4">
-        {{ field(class='form-control', **kwargs)|safe }}
-        {% if field.errors %}
-        {% for error in field.errors %}
-        <span class="help-inline">[{{ error }}]</span><br>
-        {% endfor %}
-        {% endif %}
+    <div class='col-sm-2'>
+        <div class="input-group bootstrap-timepicker timepicker">
+            {{ field(class='form-control input-small', **kwargs)|safe }}
+            <span class="input-group-addon">
+                <i class="glyphicon glyphicon-time"></i>
+            </span>
+            {% if field.errors %}
+            {% for error in field.errors %}
+            <span class="help-inline">[{{ error }}]</span><br>
+            {% endfor %}
+            {% endif %}
+        </div>
     </div>
     {% endmacro %}
     {% macro render_date_field(field) %}
@@ -85,7 +89,9 @@
         {{ render_field(form.service_id) }}
 
         <div class="form-group row">
-            {{ render_time_field(form.hours) }}
+            <label class="col-sm-2 col-form-label">Przedział godzinowy:</label>
+            {{ render_time_field(form.time_from) }}
+            {{ render_time_field(form.time_to) }}
 
             <label class="col-sm-2 col-form-label">Przedział datowy:</label>
             {{ render_date_field(form.date_from) }}

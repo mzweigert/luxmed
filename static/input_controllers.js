@@ -73,7 +73,7 @@ var input_controllers = function() {
 $(function() {
 
    input_controllers();
-   //time_controllers();
+   time_controllers();
    date_controllers();
 
 });

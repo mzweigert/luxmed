@@ -7,7 +7,7 @@ from flask_login import LoginManager, login_user, logout_user
 from werkzeug.utils import redirect
 from expiringdict import ExpiringDict
 
-from db import DBManager, VisitToBook
+from db import DBManager, visits
 from forms.LoginForm import LoginForm
 from MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType
 from db.UserClass import UserClass
@@ -70,7 +70,7 @@ def index():
 
 
 def handle_visit_request(form, user_id):
-    data = VisitToBook.init_from(form.data)
+    data = visits.VisitToBook.init_from(form.data)
     data.user = cache[user_id].email
     exists = DBManager.visit_exists(data)
     if exists:

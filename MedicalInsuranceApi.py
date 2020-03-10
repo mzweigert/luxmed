@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from logger import *
 from enum import Enum
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, Collection
 
-from db.VisitToBook import VisitToBook
+from db.visits import VisitToBook
 from luxmed import LuxMed
 from luxmed.visits import VisitHours
 
@@ -37,32 +39,68 @@ class MedicalInsuranceApi:
         return _services
 
     def book_a_visit(self, visit: VisitToBook) -> Tuple[Optional[Any], VisitToBook]:
-        lang_id = None
-        for _id, lang in self._api.languages().items():
-            if lang == 'polish':
-                lang_id = _id
-        payer = next(iter(self._api.payers(visit.city_id, visit.service_id)))['Id']
+        time_from = datetime.strptime(visit.time_from, "%H:%M").time()
+        time_to = datetime.strptime(visit.time_to, "%H:%M").time()
+
         details = None
-        if not visit.clinic_ids:
-            visits = self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, hours=VisitHours(visit.hours),
-                                           from_date=visit.date_from, to_date=visit.date_to)
-            details = self.__try_book_a_visit(visits)
-        else:
-            for clinic_id in visit.clinic_ids:
-                visits_part = self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id,
-                                                    hours=VisitHours(visit.hours), from_date=visit.date_from,
-                                                    to_date=visit.date_to)
-                details, wrong_clinic = self.__try_book_a_visit(visits_part)
-                if wrong_clinic:
-                    visit.clinic_ids.remove(clinic_id)
-                elif details:
-                    break
+        period = MedicalInsuranceApi.__get_hours_from_period(time_from, time_to)
+        for visits in self.__find_available_visits(visit, period):
+            details, wrong_clinic = self.__try_book_a_visit(time_from, time_to, visits)
+            if wrong_clinic and wrong_clinic in visit.clinic_ids:
+                visit.clinic_ids.remove(wrong_clinic)
+            elif details:
+                break
         return visit, details
 
-    def __try_book_a_visit(self, visits):
-        wrong_clinic = False
+    def __find_available_visits(self, visit, period):
+        lang_id = self.__find_lang_id()
+        payer = next(iter(self._api.payers(visit.city_id, visit.service_id)))['Id']
+
+        if not visit.clinic_ids:
+            for hours in period:
+                yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, hours=hours,
+                                            from_date=visit.date_from, to_date=visit.date_to)
+        else:
+            for clinic_id in visit.clinic_ids:
+                for hours in period:
+                    yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id,
+                                                hours=hours, from_date=visit.date_from, to_date=visit.date_to)
+
+    def __find_lang_id(self):
+        for _id, lang in self._api.languages().items():
+            if lang == 'polish':
+                return _id
+        return None
+
+    @classmethod
+    def __get_hours_from_period(cls, time_from: datetime.time, time_to: datetime.time) -> Collection[VisitHours]:
+        if time_from.hour < 10 and time_to.hour > 17:
+            return [VisitHours.ALL]
+
+        hours = list()
+        if time_from.hour < 10:
+            hours.append(VisitHours.BEFORE_10)
+        elif time_from.hour >= 10 and time_to.hour <= 17 and time_to.minute == 0:
+            return [VisitHours.BETWEEN_10_TO_17]
+        elif time_from.hour > 17:
+            return [VisitHours.PAST_17]
+
+        if 10 <= time_to.hour <= 17 and time_to.minute == 0:
+            hours.append(VisitHours.BETWEEN_10_TO_17)
+        else:
+            hours.append(VisitHours.BETWEEN_10_TO_17)
+            hours.append(VisitHours.PAST_17)
+
+        return hours
+
+    def __try_book_a_visit(self, time_from: datetime.time, time_to: datetime.time, visits):
+        wrong_clinic = None
         for visit in visits:
-            if visit['PayerDetailsList']:
+            if not visit['PayerDetailsList']:
+                wrong_clinic = visit['Clinic']['Id']
+                continue
+            start_time = datetime.fromisoformat(visit['VisitDate']['StartDateTime']).replace(tzinfo=None).time()
+            if time_from <= start_time <= time_to:
                 logger.debug("Visit for user: {0} found!".format(self._api.user()['UserName']))
                 logger.debug(visit)
                 details = self._api.visits.reserve(clinic_id=visit['Clinic']['Id'], doctor_id=visit['Doctor']['Id'],
@@ -73,10 +111,7 @@ class MedicalInsuranceApi:
                                                    referral_required_by_service=visit['ReferralRequiredByService'],
                                                    payer_data=visit['PayerDetailsList'][0])
                 logger.debug(details)
-                wrong_clinic = False
-                return details, wrong_clinic
-            else:
-                wrong_clinic = True
+                return details, None
         return None, wrong_clinic
 
     def get_user_info(self):
