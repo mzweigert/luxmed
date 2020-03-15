@@ -116,6 +116,7 @@ def get_user_id_from_session():
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
+
     if request.method == 'GET':
         if not get_user_id_from_session() or get_user_id_from_session() not in cache:
             form = LoginForm()
@@ -124,29 +125,32 @@ def login():
             return redirect(url_for('index'))
 
     form = LoginForm(request.form)
-    if form.validate():
+    if not form.validate():
+        return render_template('login.html', form=form, error_msg="Nieprawidłowe dane")
 
-        try:
-            user = DBManager.find_user(form.email.data)
-            if not user:
-                api = MedicalInsuranceApi(form.email.data, form.password.data, MedicalInsuranceType.LuxMed)
-                user = api.get_user_info()
-                user = UserClass(form.email.data, user["AccountId"])
-                DBManager.save_user(user)
-            elif user and auth_data[form.email.data] == form.password.data:
-                api = MedicalInsuranceApi(form.email.data, form.password.data, MedicalInsuranceType.LuxMed)
-            else:
-                return render_template('login.html', form=form, error_msg="Nieprawidłowe hasło")
+    try:
+        user = DBManager.find_user(form.email.data)
+        if not user:
+            api = MedicalInsuranceApi(form.email.data, form.password.data, MedicalInsuranceType.LuxMed)
+            user = api.get_user_info()
+            user = UserClass(form.email.data, user["AccountId"])
+            DBManager.save_user(user)
+        elif user and auth_data[form.email.data] == form.password.data:
+            api = MedicalInsuranceApi(form.email.data, form.password.data, MedicalInsuranceType.LuxMed)
+        else:
+            return render_template('login.html', form=form, error_msg="Nieprawidłowe hasło")
 
-            cache[user.id] = user
-            cache[user.id + '-api'] = api
-            login_user(user, remember=form.remember_me.data)
-            return redirect(url_for('index'))
-        except LuxMedError:
-            return render_template('login.html', form=form,
-                                   error_msg="System nie mógł zalogować do opieki medycznej, spróbuj ponownie.")
+        cache[user.id] = user
+        cache[user.id + '-api'] = api
+        login_user(user, remember=form.remember_me.data)
+        return redirect(url_for('index'))
+    except LuxMedError as e:
+        if e.code == 2:
+            error_msg = "Nieprawidłowy login lub hasło"
+        else:
+            error_msg = "System nie mógł zalogować do opieki medycznej, spróbuj ponownie."
 
-    return render_template('login.html', form=form, error_msg="Nieprawidłowe dane logowania")
+    return render_template('login.html', form=form, error_msg=error_msg)
 
 
 if __name__ == '__main__':
