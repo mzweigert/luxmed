@@ -16,3 +16,5 @@ venv*/
 # IDE, editors
 .idea/
 .vscode/
+
+.auth_properties

@@ -2,7 +2,7 @@ from configparser import ConfigParser
 
 import pyorient
 
-from db import UserClass, VisitToBook
+from db import UserClass, visits
 
 cp = ConfigParser()
 cp.read("auth.properties")
@@ -10,6 +10,8 @@ db_auth_data = next(iter(cp.items("db_auth")))
 
 
 class DBConnection:
+    __INITIALIZED = False
+
     def __init__(self):
         pass
 
@@ -23,6 +25,8 @@ class DBConnection:
         self.client.close()
 
     def __init_db(self):
+        if DBConnection.__INITIALIZED:
+            return
         exists = self.client.db_exists("visits", pyorient.STORAGE_TYPE_PLOCAL)
         if not exists:
             self.client.db_create("visits", pyorient.DB_TYPE_GRAPH, pyorient.STORAGE_TYPE_PLOCAL)
@@ -38,19 +42,25 @@ class DBConnection:
         if not visit_to_book_exists:
             self.client.command('create class VisitToBook extends V')
 
+        DBConnection.__INITIALIZED = False
 
-def visit_exists(visit: VisitToBook):
+
+def visit_exists(visit: visits):
     with DBConnection() as client:
         if visit.clinic_ids:
             _visit_exists = client.query(str.format(
-                'select from VisitToBook where city_id =\'{0}\' and clinic_ids = \'{1}\' and service_id = \'{2}\' '
-                'and hours = \'{3}\' and user = \'{4}\' and date_from >= \'{4}\' and date_to <= \'{5}\'', visit.city_id,
-                visit.clinic_ids, visit.service_id, visit.hours, visit.user, visit.date_from, visit.date_to))
+                'select from VisitToBook where city_id ={0} and clinic_ids = {1} and service_id = {2} '
+                'and user = \'{3}\' and date_from >= \'{4}\' and date_to <= \'{5}\' '
+                'and time_from >= \'{6}\' and time_to <= \'{7}\'',
+                visit.city_id, visit.clinic_ids, visit.service_id, visit.user, visit.date_from, visit.date_to,
+                visit.time_from, visit.time_to))
         else:
             _visit_exists = client.query(str.format(
-                'select from VisitToBook where city_id =\'{0}\' and service_id = \'{1}\' '
-                'and hours = \'{2}\' and user = \'{3}\' and date_from >= \'{4}\' and date_to <= \'{5}\'', visit.city_id,
-                visit.service_id, visit.hours, visit.user, visit.date_from, visit.date_to))
+                'select from VisitToBook where city_id ={0} and service_id = {1} '
+                'and user = {2} and date_from >= {3} and date_to <= \'{4}\' ',
+                'and time_from >= \'{5}\' and time_to <= \'{6}\'',
+                visit.city_id, visit.service_id, visit.user, visit.date_from, visit.date_to, visit.time_from,
+                visit.time_to))
 
         if _visit_exists:
             return True
@@ -58,7 +68,7 @@ def visit_exists(visit: VisitToBook):
             return False
 
 
-def save_visit_to_book(visit: VisitToBook):
+def save_visit_to_book(visit: visits):
     with DBConnection() as client:
         record = {
             '@VisitToBook': visit.__dict__
@@ -68,10 +78,10 @@ def save_visit_to_book(visit: VisitToBook):
 
 def get_all_visits():
     with DBConnection() as client:
-        visits = client.query("select from VisitToBook")
+        _visits = client.query("select from VisitToBook")
         visits_to_book = dict()
-        for v in visits:
-            visit = VisitToBook.init_from(v.oRecordData, v._rid)
+        for v in _visits:
+            visit = visits.VisitToBookRecord.init_from_db(v.oRecordData, v._rid)
             if visit.user not in visits_to_book:
                 user_visits = list()
                 user_visits.append(visit)
