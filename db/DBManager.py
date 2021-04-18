@@ -56,8 +56,8 @@ def visit_exists(visit: visits):
                 visit.time_from, visit.time_to))
         else:
             _visit_exists = client.query(str.format(
-                'select from VisitToBook where city_id ={0} and service_id = {1} '
-                'and user = {2} and date_from >= {3} and date_to <= \'{4}\' ',
+                'select from VisitToBook where city_id = {0} and service_id = {1} '
+                'and user = \'{2}\' and date_from >= \'{3}\' and date_to <= \'{4}\' '
                 'and time_from >= \'{5}\' and time_to <= \'{6}\'',
                 visit.city_id, visit.service_id, visit.user, visit.date_from, visit.date_to, visit.time_from,
                 visit.time_to))

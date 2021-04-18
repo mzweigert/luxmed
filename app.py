@@ -51,20 +51,20 @@ def index():
 
     if request.method == 'POST':
         form = VisitForm(request.form)
-        form.city_id.choices = _cities
+        form.city_id.choices = list(_cities)
         _clinics = cache[user_id + '-api'].get_clinics(form.city_id.data)
         _clinics[-1] = ''
-        form.clinic_ids.choices = _clinics.items()
+        form.clinic_ids.choices = list(_clinics.items())
         _clinic_ids = form.clinic_ids.data
         if _clinic_ids[0] == -1:
-            form.service_id.choices = cache[user_id + '-api'].get_services(form.city_id.data).items()
+            _services = cache[user_id + '-api'].get_services(form.city_id.data).items()
         else:
-            form.service_id.choices = cache[user_id + '-api'].get_services(form.city_id.data,
-                                                                           _clinic_ids).items()
+            _services = cache[user_id + '-api'].get_services(form.city_id.data, _clinic_ids).items()
+        form.service_id.choices = list(_services)
         if form.validate():
             return handle_visit_request(form, user_id)
 
-    form.city_id.choices = _cities
+    form.city_id.choices = list(_cities)
 
     return render_template('index.html', form=form)
 

@@ -1,11 +1,12 @@
 click
 inflection>=0.3.1
 requests>=2.22.0
-Flask>=1.1.1
-Flask-WTF>=0.14.3
-WTForms>=2.2.1
+Flask>=1.1.2
+Flask-WTF>=0.14.2
+WTForms>=2.3.3
 Flask-Login>=0.5.0
 expiringdict>=1.2.0
 pyorient>=1.5.5
 bcrypt>=3.1.7
 ConfigParser>=4.0.2
+email-validator>=1.1.2
