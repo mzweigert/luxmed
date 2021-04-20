@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import sleep
 
 from logger import *
 from enum import Enum
@@ -38,6 +39,16 @@ class MedicalInsuranceApi:
                 _services.update(services_part)
         return _services
 
+    def get_doctors(self, _city_id, _service_id, _clinic_ids=None):
+        _doctors = dict()
+        if not _clinic_ids:
+            _doctors = self._api.doctors(_city_id, _service_id)
+        else:
+            for clinic_id in _clinic_ids:
+                doctor_part = self._api.doctors(_city_id, _service_id, clinic_id)
+                _doctors.update(doctor_part)
+        return _doctors
+
     def book_a_visit(self, visit: VisitToBook) -> Tuple[Optional[Any], VisitToBook]:
         time_from = datetime.strptime(visit.time_from, "%H:%M").time()
         time_to = datetime.strptime(visit.time_to, "%H:%M").time()
@@ -50,21 +61,34 @@ class MedicalInsuranceApi:
                 visit.clinic_ids.remove(wrong_clinic)
             elif details:
                 break
+            sleep(5)
+
         return visit, details
 
     def __find_available_visits(self, visit, period):
         lang_id = self.__find_lang_id()
         payer = next(iter(self._api.payers(visit.city_id, visit.service_id)))['Id']
 
-        if not visit.clinic_ids:
-            for hours in period:
+        for hours in period:
+            if not visit.clinic_ids and not visit.doctor_ids:
                 yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, hours=hours,
                                             from_date=visit.date_from, to_date=visit.date_to)
-        else:
-            for clinic_id in visit.clinic_ids:
-                for hours in period:
+            elif not visit.doctor_ids:
+                for clinic_id in visit.clinic_ids:
                     yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id,
                                                 hours=hours, from_date=visit.date_from, to_date=visit.date_to)
+            elif not visit.clinic_ids:
+                for doctor_id in visit.doctor_ids:
+                    yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, doctor_id=doctor_id,
+                                                hours=hours, from_date=visit.date_from, to_date=visit.date_to)
+            else:
+                for clinic_id in visit.clinic_ids:
+                    _available_doctors = set(self._api.doctors(visit.city_id, visit.service_id, clinic_id).keys())
+                    _available_doctors = _available_doctors.intersection(visit.doctor_ids)
+                    sleep(1)
+                    for doctor_id in _available_doctors:
+                        yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id, doctor_id,
+                                                    hours=hours, from_date=visit.date_from, to_date=visit.date_to)
 
     def __find_lang_id(self):
         for _id, lang in self._api.languages().items():

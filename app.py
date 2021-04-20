@@ -58,9 +58,13 @@ def index():
         _clinic_ids = form.clinic_ids.data
         if _clinic_ids[0] == -1:
             _services = cache[user_id + '-api'].get_services(form.city_id.data).items()
+            _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data).items()
         else:
             _services = cache[user_id + '-api'].get_services(form.city_id.data, _clinic_ids).items()
+            _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data, _clinic_ids).items()
         form.service_id.choices = list(_services)
+        form.doctor_ids.choices = list(_doctors)
+
         if form.validate():
             return handle_visit_request(form, user_id)
 
@@ -106,6 +110,20 @@ def services():
     return jsonify(_services)
 
 
+@app.route("/doctors", methods=['POST'])
+def doctors():
+    if not get_user_id_from_session():
+        form = LoginForm()
+        return render_template('index.html', form=form)
+
+    _clinic_ids = request.form.getlist('clinic_ids[]')
+    _city_id = request.form.get('city_id')
+    _service_id = request.form.get("service_id")
+    _doctors = cache[get_user_id_from_session() + '-api'].get_doctors(_city_id, _service_id, _clinic_ids)
+
+    return jsonify(_doctors)
+
+
 def get_user_id_from_session():
     if 'user_id' in session:
         return session['user_id']
@@ -116,7 +134,6 @@ def get_user_id_from_session():
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-
     if request.method == 'GET':
         if not get_user_id_from_session() or get_user_id_from_session() not in cache:
             form = LoginForm()

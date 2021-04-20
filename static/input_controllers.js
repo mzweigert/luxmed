@@ -4,6 +4,8 @@ var input_controllers = function() {
 
     $clinics = $('#clinics');
     $services = $('#services');
+    $doctors = $('#doctors');
+    selectedClinics = [], selectedDoctors = [];
 
     var cities_change_fn = function() {
         var cityId = $(':selected', this)[0].value;
@@ -20,14 +22,13 @@ var input_controllers = function() {
             } else if (keys.length == 1) {
                  id = keys[0]
                  $clinics.append(`<option value="${id}" selected> ${data[id]} </option>`);
-                 clinics_change_fn()
+                 $clinics.change()
             }
             $clinics.selectpicker('refresh');
             $services.selectpicker('refresh');
+            $doctors.selectpicker('refresh');
         });
     }
-
-    var selectedClinics = [];
 
     var clinics_change_fn = function(e, params) {
 
@@ -58,16 +59,61 @@ var input_controllers = function() {
 
         $.post( "/services", body).done(function(data) {
             $services.empty()
+            $doctors.empty()
             $services.append('<option value="">Wybierz usługę</option>');
             Object.keys(data).forEach(function(k) {
                $services.append(`<option value="${k}"> ${data[k]} </option>`);
             })
+            $doctors.selectpicker('refresh');
             $services.selectpicker('refresh');
         });
     };
 
+   var services_change_fn = function(e, params) {
+
+        var city_id = $cities.find(":selected")[0].value;
+        var service_id = $services.find(":selected")[0].value;
+
+        var clinic_ids = $.map($(':selected', $clinics), function(option) {
+         return option.value;
+        });
+
+        if(clinic_ids.length == 1 && clinic_ids[0] == -1) {
+            clinic_ids = [];
+        }
+
+        var body = { city_id: city_id, service_id: service_id, clinic_ids: clinic_ids }
+
+        $.post( "/doctors", body).done(function(data) {
+            $doctors.empty()
+            $doctors.append('<option value="-1"> Dowolny </option>');
+            Object.keys(data).forEach(function(k) {
+               $doctors.append(`<option value="${k}"> ${data[k]} </option>`);
+            })
+            $doctors.selectpicker('refresh');
+        });
+    };
+
+     var doctors_change_fn = function(e, params) {
+
+        var newValues = $($(this).val()).not(selectedDoctors).get();
+
+        if(newValues[0] == -1 && $selected.length > 1) {
+            $doctors.selectpicker('deselectAll')
+            $doctors.selectpicker('val', '-1');
+            $doctors.selectpicker('refresh');
+        } else if (newValues[0] != -1 && selectedDoctors.includes("-1")) {
+            $doctors.selectpicker('deselectAll')
+            $doctors.selectpicker('val', newValues[0]);
+            $doctors.selectpicker('refresh');
+        }
+        selectedDoctors = $(this).val();
+    };
+
     $cities.on('change', cities_change_fn);
     $clinics.on('change', clinics_change_fn);
+    $services.on('change', services_change_fn);
+    $doctors.on('change', doctors_change_fn)
 }
 
 $(function() {

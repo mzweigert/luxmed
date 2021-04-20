@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+from time import sleep
 
 from MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType, logger
 from db import DBManager
@@ -27,6 +28,8 @@ def action():
                 DBManager.remove_visit(visit_to_book.db_record_id)
             else:
                 logger.debug("Couldn't find visit at this moment.")
+            logger.debug("Wait 10 seconds to try book next visit...")
+            sleep(10)
 
 
 if __name__ == '__main__':
