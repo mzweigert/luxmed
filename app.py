@@ -57,13 +57,14 @@ def index():
         form.clinic_ids.choices = list(_clinics.items())
         _clinic_ids = form.clinic_ids.data
         if _clinic_ids[0] == -1:
-            _services = cache[user_id + '-api'].get_services(form.city_id.data).items()
-            _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data).items()
+            _services = cache[user_id + '-api'].get_services(form.city_id.data)
+            _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data)
         else:
-            _services = cache[user_id + '-api'].get_services(form.city_id.data, _clinic_ids).items()
-            _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data, _clinic_ids).items()
-        form.service_id.choices = list(_services)
-        form.doctor_ids.choices = list(_doctors)
+            _services = cache[user_id + '-api'].get_services(form.city_id.data, _clinic_ids)
+            _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data, _clinic_ids)
+        _doctors[-1] = ''
+        form.service_id.choices = list(_services.items())
+        form.doctor_ids.choices = list(_doctors.items())
 
         if form.validate():
             return handle_visit_request(form, user_id)
@@ -77,7 +78,10 @@ def handle_visit_request(form, user_id):
     data = visits.VisitToBook.init_from(form.data)
     data.user = cache[user_id].email
     exists = DBManager.visit_exists(data)
-    if exists:
+    reserved = cache[user_id + '-api'].is_visit_already_reserved(data.service_id)
+    if reserved:
+        return "Masz już zarezerowaną wizytę dla podanej usługi"
+    elif exists:
         return "Wizyta z podanymi kryteriami została już zapisana do rezerwacji"
     else:
         data, details = cache[user_id + '-api'].book_a_visit(data)

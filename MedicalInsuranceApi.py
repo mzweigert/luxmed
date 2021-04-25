@@ -49,6 +49,10 @@ class MedicalInsuranceApi:
                 _doctors.update(doctor_part)
         return _doctors
 
+    def is_visit_already_reserved(self, _service_id):
+        reserved_visits = self._api.visits.reserved()
+        return any(reserved['Service']['Id'] == _service_id for reserved in reserved_visits['ReservedVisits'])
+
     def book_a_visit(self, visit: VisitToBook) -> Tuple[Optional[Any], VisitToBook]:
         time_from = datetime.strptime(visit.time_from, "%H:%M").time()
         time_to = datetime.strptime(visit.time_to, "%H:%M").time()
@@ -56,19 +60,20 @@ class MedicalInsuranceApi:
         details = None
         period = MedicalInsuranceApi.__get_hours_from_period(time_from, time_to)
         for visits in self.__find_available_visits(visit, period):
+            sleep(2)
             details, wrong_clinic = self.__try_book_a_visit(time_from, time_to, visits)
             if wrong_clinic and wrong_clinic in visit.clinic_ids:
                 visit.clinic_ids.remove(wrong_clinic)
             elif details:
                 break
-            sleep(5)
+            sleep(2)
 
         return visit, details
 
     def __find_available_visits(self, visit, period):
         lang_id = self.__find_lang_id()
         payer = next(iter(self._api.payers(visit.city_id, visit.service_id)))['Id']
-
+        sleep(2)
         for hours in period:
             if not visit.clinic_ids and not visit.doctor_ids:
                 yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, hours=hours,
@@ -85,7 +90,7 @@ class MedicalInsuranceApi:
                 for clinic_id in visit.clinic_ids:
                     _available_doctors = set(self._api.doctors(visit.city_id, visit.service_id, clinic_id).keys())
                     _available_doctors = _available_doctors.intersection(visit.doctor_ids)
-                    sleep(1)
+                    sleep(2)
                     for doctor_id in _available_doctors:
                         yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id, doctor_id,
                                                     hours=hours, from_date=visit.date_from, to_date=visit.date_to)
