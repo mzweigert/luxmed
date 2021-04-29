@@ -6,8 +6,8 @@ from enum import Enum
 from typing import Optional, Tuple, Any, Collection
 
 from db.visits import VisitToBook
-from luxmed import LuxMed
-from luxmed.visits import VisitHours
+from api.luxmed import LuxMed
+from api.luxmed.visits import VisitHours
 
 
 class MedicalInsuranceType(Enum):
@@ -29,7 +29,20 @@ class MedicalInsuranceApi:
     def get_clinics(self, city_id) -> dict:
         return self._api.clinics(city_id)
 
-    def get_services(self, _city_id, _clinic_ids=None) -> dict:
+    def get_all_services(self, _city_id, _clinic_ids=None):
+        services = self.__get_services(_city_id, _clinic_ids)
+        referrals_services = self._api.referrals.services()
+        return {**services, **referrals_services}
+
+    def get_grouped_services(self, _city_id, _clinic_ids=None) -> dict:
+        services = self.__get_services(_city_id, _clinic_ids)
+        referrals_services = self._api.referrals.services_with_referral_ids()
+        return {
+            'services': services,
+            'referral_services': referrals_services
+        }
+
+    def __get_services(self, _city_id, _clinic_ids=None) -> dict:
         _services = dict()
         if not _clinic_ids:
             _services = self._api.services(_city_id)
@@ -39,13 +52,13 @@ class MedicalInsuranceApi:
                 _services.update(services_part)
         return _services
 
-    def get_doctors(self, _city_id, _service_id, _clinic_ids=None):
+    def get_doctors(self, _city_id, _service_id, referral_id=None, _clinic_ids=None):
         _doctors = dict()
         if not _clinic_ids:
-            _doctors = self._api.doctors(_city_id, _service_id)
+            _doctors = self._api.doctors(_city_id, _service_id, referral_id)
         else:
             for clinic_id in _clinic_ids:
-                doctor_part = self._api.doctors(_city_id, _service_id, clinic_id)
+                doctor_part = self._api.doctors(_city_id, _service_id, referral_id, clinic_id)
                 _doctors.update(doctor_part)
         return _doctors
 
@@ -61,7 +74,7 @@ class MedicalInsuranceApi:
         period = MedicalInsuranceApi.__get_hours_from_period(time_from, time_to)
         for visits in self.__find_available_visits(visit, period):
             sleep(2)
-            details, wrong_clinic = self.__try_book_a_visit(time_from, time_to, visits)
+            details, wrong_clinic = self.__try_book_a_visit(time_from, time_to, visits, visit.referral_id)
             if wrong_clinic and wrong_clinic in visit.clinic_ids:
                 visit.clinic_ids.remove(wrong_clinic)
             elif details:
@@ -76,16 +89,17 @@ class MedicalInsuranceApi:
         sleep(2)
         for hours in period:
             if not visit.clinic_ids and not visit.doctor_ids:
-                yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, hours=hours,
-                                            from_date=visit.date_from, to_date=visit.date_to)
+                yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, referral_id=visit.referral_id,
+                                            hours=hours, from_date=visit.date_from, to_date=visit.date_to)
             elif not visit.doctor_ids:
                 for clinic_id in visit.clinic_ids:
-                    yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id,
-                                                hours=hours, from_date=visit.date_from, to_date=visit.date_to)
+                    yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, referral_id=visit.referral_id,
+                                                clinic_id=clinic_id, hours=hours, from_date=visit.date_from, to_date=visit.date_to)
             elif not visit.clinic_ids:
                 for doctor_id in visit.doctor_ids:
                     yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, doctor_id=doctor_id,
-                                                hours=hours, from_date=visit.date_from, to_date=visit.date_to)
+                                                referral_id=visit.referral_id,hours=hours, from_date=visit.date_from,
+                                                to_date=visit.date_to)
             else:
                 for clinic_id in visit.clinic_ids:
                     _available_doctors = set(self._api.doctors(visit.city_id, visit.service_id, clinic_id).keys())
@@ -93,7 +107,8 @@ class MedicalInsuranceApi:
                     sleep(2)
                     for doctor_id in _available_doctors:
                         yield self._api.visits.find(visit.city_id, visit.service_id, lang_id, payer, clinic_id, doctor_id,
-                                                    hours=hours, from_date=visit.date_from, to_date=visit.date_to)
+                                                    referral_id=visit.referral_id,hours=hours,
+                                                    from_date=visit.date_from, to_date=visit.date_to)
 
     def __find_lang_id(self):
         for _id, lang in self._api.languages().items():
@@ -122,7 +137,7 @@ class MedicalInsuranceApi:
 
         return hours
 
-    def __try_book_a_visit(self, time_from: datetime.time, time_to: datetime.time, visits):
+    def __try_book_a_visit(self, time_from: datetime.time, time_to: datetime.time, visits, referral_id):
         wrong_clinic = None
         for visit in visits:
             if not visit['PayerDetailsList']:
@@ -134,6 +149,7 @@ class MedicalInsuranceApi:
                 logger.debug(visit)
                 details = self._api.visits.reserve(clinic_id=visit['Clinic']['Id'], doctor_id=visit['Doctor']['Id'],
                                                    room_id=visit['RoomId'],
+                                                   referral_id=referral_id,
                                                    service_id=visit['ServiceId'],
                                                    start_date_time=visit['VisitDate']['StartDateTime'],
                                                    is_additional=visit['IsAdditional'],

@@ -3,7 +3,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterator
 
-from luxmed.transport import LuxMedTransport
+from api.luxmed.transport import LuxMedTransport
 
 
 class LuxMedReadOnlyMapping(Mapping):

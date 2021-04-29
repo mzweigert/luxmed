@@ -9,10 +9,10 @@ from expiringdict import ExpiringDict
 
 from db import DBManager, visits
 from forms.LoginForm import LoginForm
-from MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType
+from api.MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType
 from db.UserClass import UserClass
 from forms.VisitForm import VisitForm
-from luxmed.errors import LuxMedError
+from api.luxmed.errors import LuxMedError
 
 app = Flask(__name__, static_url_path='/static')
 app.secret_key = 'secret_key_ZXC235sdf'
@@ -48,7 +48,6 @@ def index():
     user_id = get_user_id_from_session()
     _cities = cache[user_id + '-api'].get_cities().items()
     form = VisitForm()
-
     if request.method == 'POST':
         form = VisitForm(request.form)
         form.city_id.choices = list(_cities)
@@ -57,10 +56,10 @@ def index():
         form.clinic_ids.choices = list(_clinics.items())
         _clinic_ids = form.clinic_ids.data
         if _clinic_ids[0] == -1:
-            _services = cache[user_id + '-api'].get_services(form.city_id.data)
+            _services = cache[user_id + '-api'].get_all_services(form.city_id.data)
             _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data)
         else:
-            _services = cache[user_id + '-api'].get_services(form.city_id.data, _clinic_ids)
+            _services = cache[user_id + '-api'].get_all_services(form.city_id.data, _clinic_ids)
             _doctors = cache[user_id + '-api'].get_doctors(form.city_id.data, form.service_id.data, _clinic_ids)
         _doctors[-1] = ''
         form.service_id.choices = list(_services.items())
@@ -109,7 +108,7 @@ def services():
 
     _clinic_ids = request.form.getlist('clinic_ids[]')
     _city_id = request.form.get('city_id')
-    _services = cache[get_user_id_from_session() + '-api'].get_services(_city_id, _clinic_ids)
+    _services = cache[get_user_id_from_session() + '-api'].get_grouped_services(_city_id, _clinic_ids)
 
     return jsonify(_services)
 
@@ -122,8 +121,9 @@ def doctors():
 
     _clinic_ids = request.form.getlist('clinic_ids[]')
     _city_id = request.form.get('city_id')
-    _service_id = request.form.get("service_id")
-    _doctors = cache[get_user_id_from_session() + '-api'].get_doctors(_city_id, _service_id, _clinic_ids)
+    _service_id = request.form.get('service_id')
+    _referral_id = request.form.get('referral_id')
+    _doctors = cache[get_user_id_from_session() + '-api'].get_doctors(_city_id, _service_id, _referral_id, _clinic_ids)
 
     return jsonify(_doctors)
 

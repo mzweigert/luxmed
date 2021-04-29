@@ -2,7 +2,7 @@ from wtforms import PasswordField, BooleanField, SubmitField, SelectField, Form
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import DataRequired, Length, Email
 
-from MedicalInsuranceApi import MedicalInsuranceType
+from api.MedicalInsuranceApi import MedicalInsuranceType
 
 MEDICAL_INS_TYPES = [
     (MedicalInsuranceType.LuxMed.value, "LuxMed")

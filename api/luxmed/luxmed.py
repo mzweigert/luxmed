@@ -2,14 +2,15 @@ from datetime import date
 from typing import Dict
 from typing import List
 
-from luxmed.examination import LuxMedExamination
-from luxmed.transformers import filter_args
-from luxmed.transformers import map_id_name
-from luxmed.transport import LuxMedTransport
-from luxmed.urls import USER_URL
-from luxmed.urls import USER_PERMISSIONS_URL
-from luxmed.urls import VISIT_TERMS_RESERVATION_URL
-from luxmed.visits import LuxMedVisits
+from api.luxmed.examination import LuxMedExamination
+from api.luxmed.refferals import LuxMedReferrals
+from api.luxmed.transformers import filter_args
+from api.luxmed.transformers import map_id_name
+from api.luxmed.transport import LuxMedTransport
+from api.luxmed.urls import USER_URL
+from api.luxmed.urls import USER_PERMISSIONS_URL
+from api.luxmed.urls import VISIT_TERMS_RESERVATION_URL
+from api.luxmed.visits import LuxMedVisits
 
 
 class LuxMed:
@@ -29,6 +30,7 @@ class LuxMed:
             app_uuid=app_uuid, client_uuid=client_uuid, lang_code=lang_code)
         self.examination = LuxMedExamination(self._transport)
         self.visits = LuxMedVisits(self._transport)
+        self.referrals = LuxMedReferrals(self._transport)
 
     def _visit_filters(self, **kwargs) -> Dict:
         return self._transport.get(VISIT_TERMS_RESERVATION_URL, params=filter_args(**kwargs))
@@ -48,10 +50,12 @@ class LuxMed:
         """Clinics available in the given city."""
         return self._mapped_visit_filters('Clinics', city_id=city_id, from_date=from_date)
 
-    def doctors(self, city_id: int, service_id: int, clinic_id: int = None, from_date: date = None) -> Dict[int, str]:
+    def doctors(self, city_id: int, service_id: int, referral_id: int = None, clinic_id: int = None,
+                from_date: date = None) -> Dict[int, str]:
         """Doctors available in the given city and providing specified service."""
         return self._mapped_visit_filters(
-            'Doctors', city_id=city_id, clinic_id=clinic_id, from_date=from_date, service_id=service_id)
+            'Doctors', city_id=city_id, referral_id=referral_id, clinic_id=clinic_id,
+            from_date=from_date, service_id=service_id)
 
     def languages(self, from_date: date = None) -> Dict[int, str]:
         """Languages the service is accessible in."""

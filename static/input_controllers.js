@@ -4,6 +4,7 @@ var input_controllers = function() {
 
     $clinics = $('#clinics');
     $services = $('#services');
+    $referral_id = $('#referral_id')
     $doctors = $('#doctors');
     selectedClinics = [], selectedDoctors = [];
 
@@ -26,6 +27,7 @@ var input_controllers = function() {
             }
             $clinics.selectpicker('refresh');
             $services.selectpicker('refresh');
+            $referral_id.val('');
             $doctors.selectpicker('refresh');
         });
     }
@@ -61,11 +63,34 @@ var input_controllers = function() {
             $services.empty()
             $doctors.empty()
             $services.append('<option value="">Wybierz usługę</option>');
-            Object.keys(data).forEach(function(k) {
-               $services.append(`<option value="${k}"> ${data[k]} </option>`);
-            })
+            var services = data['services'],
+                referral_services = data['referral_services']
+            if(referral_services) {
+                $services.append('<optgroup label="Skierowania">');
+                Object.keys(referral_services).forEach(function(k) {
+                   $services.append(
+                   `<option referral_id='${referral_services[k].ReferralId}' style='background: lightseagreen;'
+                    value="${k}"> ${referral_services[k].Name} </option>`
+                   );
+                })
+                $services.append('</optgroup>');
+
+                $services.append('<optgroup label="Uslugi">');
+                Object.keys(services).forEach(function(k) {
+                   $services.append(`<option value="${k}"> ${services[k]} </option>`);
+                })
+                $services.append('</optgroup>');
+
+            } else {
+                Object.keys(services).forEach(function(k) {
+                   $services.append(`<option value="${k}"> ${services[k]} </option>`);
+                })
+            }
+
+
             $doctors.selectpicker('refresh');
             $services.selectpicker('refresh');
+            $referral_id.val('');
         });
     };
 
@@ -73,7 +98,8 @@ var input_controllers = function() {
 
         var city_id = $cities.find(":selected")[0].value;
         var service_id = $services.find(":selected")[0].value;
-
+        var referral_id = $services.find(":selected").attr('referral_id')
+        $referral_id.val(referral_id)
         var clinic_ids = $.map($(':selected', $clinics), function(option) {
          return option.value;
         });
@@ -82,7 +108,7 @@ var input_controllers = function() {
             clinic_ids = [];
         }
 
-        var body = { city_id: city_id, service_id: service_id, clinic_ids: clinic_ids }
+        var body = { city_id: city_id, service_id: service_id, referral_id: referral_id, clinic_ids: clinic_ids }
 
         $.post( "/doctors", body).done(function(data) {
             $doctors.empty()

@@ -17,12 +17,12 @@ import pytest
 from vcr import VCR
 from vcr.filters import replace_post_data_parameters
 
-from luxmed.transport import LuxMedTransport
-from luxmed.urls import VISIT_RESERVE_TEMPORARY_URL
-from luxmed.urls import VISIT_RESERVE_URL
-from luxmed.urls import VISIT_TERMS_URL
-from luxmed.urls import VISIT_TERMS_VALUATION_URL
-from luxmed.utils import year_ago as _year_ago
+from api.luxmed.transport import LuxMedTransport
+from api.luxmed.urls import VISIT_RESERVE_TEMPORARY_URL
+from api.luxmed.urls import VISIT_RESERVE_URL
+from api.luxmed.urls import VISIT_TERMS_URL
+from api.luxmed.urls import VISIT_TERMS_VALUATION_URL
+from api.luxmed.utils import year_ago as _year_ago
 
 
 DATE_TIME = datetime(year=2012, month=12, day=12, hour=12, minute=12, second=12, tzinfo=timezone.utc)

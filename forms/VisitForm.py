@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, validators, SelectField, SelectMultipleField
+from wtforms import Form, StringField, validators, SelectField, SelectMultipleField, HiddenField
 
 
 class VisitForm(Form):
@@ -8,6 +8,7 @@ class VisitForm(Form):
                                      choices=[], default=None, id="clinics", coerce=int)
     service_id = SelectField('Usługa', [validators.DataRequired()], render_kw={"data-live-search": "true"}, choices=[],
                              default=None, id="services", coerce=int)
+    referral_id = HiddenField('Skierowanie', default=None, id="referral_id")
     doctor_ids = SelectMultipleField("Lekarz", [validators.DataRequired()], render_kw={"data-live-search": "true"},
                                      choices=[], default=None, id="doctors", coerce=int)
     time_from = StringField('Time from', [validators.DataRequired()], id="time-from")

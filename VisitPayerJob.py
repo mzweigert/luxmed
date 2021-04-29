@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 from time import sleep
 
-from MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType, logger
+from api.MedicalInsuranceApi import MedicalInsuranceApi, MedicalInsuranceType, logger
 from db import DBManager
 
 
