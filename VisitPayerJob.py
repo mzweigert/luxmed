@@ -33,7 +33,7 @@ def action():
             visit_to_book, details = api.book_a_visit(visit_to_book)
             if details:
                 logger.debug("Visit has been booked.")
-                booked_services_for_user.add(details.service_id)
+                booked_services_for_user.add(visit_to_book.service_id)
                 DBManager.remove_visit(visit_to_book.db_record_id)
             else:
                 logger.debug("Couldn't find visit at this moment.")
