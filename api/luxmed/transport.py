@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 from typing import Dict
 from typing import List
 from typing import Union
@@ -9,11 +8,11 @@ from requests.exceptions import HTTPError
 from requests.exceptions import Timeout
 from requests import Session
 
-from luxmed.errors import LuxMedError
-from luxmed.errors import LuxMedConnectionError
-from luxmed.errors import LuxMedTimeoutError
-from luxmed.urls import HOST
-from luxmed.urls import TOKEN_URL
+from api.luxmed.errors import LuxMedError
+from api.luxmed.errors import LuxMedConnectionError
+from api.luxmed.errors import LuxMedTimeoutError
+from api.luxmed.urls import HOST
+from api.luxmed.urls import TOKEN_URL
 
 
 class LuxMedTransport:
@@ -40,7 +39,7 @@ class LuxMedTransport:
         self._session.headers = {
             'x-api-client-identifier': 'Android',
             'Accept-Language': self.lang_code,
-            'Custom-User-Agent': 'Patient Portal; 3.17.0; '
+            'Custom-User-Agent': 'Patient Portal; 3.20.5; '
                                  f'{self.app_uuid}; '
                                  'Android; 28; generic_x86 Android SDK built for x86',
             'Host': HOST,

@@ -12,7 +12,7 @@ FILTER_DEFAULTS = dict(from_date=lambda: date.today().isoformat())
 
 
 def full_filter_name(name: str) -> str:
-    return 'filter.' + camelize(name)
+    return 'filter.' + camelize(name, False)
 
 
 def filter_args(**kwargs) -> Iterator[Tuple[str, Union[int, str]]]:

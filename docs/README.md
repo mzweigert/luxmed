@@ -10,8 +10,9 @@ pip install -e git://github.com/przemal/luxmed#egg=luxmed
 ```
 
 ## Basic usage
+
 ```python
-from luxmed import LuxMed
+from api.luxmed import LuxMed
 
 luxmed = LuxMed(user_name='user', password='pass')
 

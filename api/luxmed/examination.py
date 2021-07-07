@@ -2,13 +2,13 @@ from datetime import date
 from typing import Dict
 from typing import Iterator
 
-from luxmed.mapping import LuxMedReadOnlyMapping
-from luxmed.transformers import filter_args
-from luxmed.transport import LuxMedTransport
-from luxmed.urls import BASE_URL
-from luxmed.urls import EXAMINATION_RESULTS_URL
-from luxmed.utils import find_link_rel
-from luxmed.utils import year_ago
+from api.luxmed.mapping import LuxMedReadOnlyMapping
+from api.luxmed.transformers import filter_args
+from api.luxmed.transport import LuxMedTransport
+from api.luxmed.urls import BASE_URL
+from api.luxmed.urls import EXAMINATION_RESULTS_URL
+from api.luxmed.utils import find_link_rel
+from api.luxmed.utils import year_ago
 
 
 class LuxMedExaminationResult(LuxMedReadOnlyMapping):

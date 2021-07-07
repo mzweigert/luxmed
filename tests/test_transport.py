@@ -1,7 +1,7 @@
 import pytest
 
-from luxmed.errors import LuxMedAuthenticationError
-from luxmed.transport import LuxMedTransport
+from api.luxmed.errors import LuxMedAuthenticationError
+from api.luxmed.transport import LuxMedTransport
 
 
 def test_authentication(authenticated_transport):

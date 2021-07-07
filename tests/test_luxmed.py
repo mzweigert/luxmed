@@ -1,6 +1,6 @@
 import pytest
 
-from luxmed.luxmed import LuxMed
+from api.luxmed.luxmed import LuxMed
 from tests.conftest import FIELD_MASK
 
 

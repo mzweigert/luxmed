@@ -1,6 +1,6 @@
 import pytest
 
-from luxmed.visits import LuxMedVisits
+from api.luxmed.visits import LuxMedVisits
 
 
 @pytest.fixture(scope='module')
